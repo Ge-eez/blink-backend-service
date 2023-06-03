@@ -1,24 +1,26 @@
 const express = require("express");
 const Challenge = require("../models/Challenge");
 const router = express.Router();
-const { body, validationResult } = require('express-validator');
+const { body, validationResult } = require("express-validator");
+const hasPermission = require("../middlewares/hasPermission");
+const auth = require("../middlewares/auth");
 
-router.get("/:id", async (req, res) => {
+router.get("/:id", auth, async (req, res) => {
   try {
     let challenge = await Challenge.findById(req.params.id)
-      .populate("questions.options")
-      .populate("questions.correctAnswer");
+      .populate("symbols")
+      .populate("requirements");
     res.json(challenge);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-router.get("/", async (req, res) => {
+router.get("/", auth, async (req, res) => {
   try {
     let challenges = await Challenge.find()
-      .populate("questions.options")
-      .populate("questions.correctAnswer");
+      .populate("symbols")
+      .populate("requirements");
     res.json(challenges);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -27,16 +29,21 @@ router.get("/", async (req, res) => {
 
 router.post(
   "/",
+  auth,
+  hasPermission("admin"),
   [
     body("name").isString().notEmpty().withMessage("Name is required"),
     body("description")
       .isString()
       .notEmpty()
       .withMessage("Description is required"),
-    body("sequence.level")
+    body("level")
       .isIn(["Beginner", "Intermediate", "Advanced"])
       .withMessage("Level is invalid"),
-    body("sequence.order").isNumeric().withMessage("Order is invalid"),
+    body("requirements.*")
+      .isMongoId()
+      .withMessage("Requirements must be valid MongoIDs"),
+    body("symbols.*").isMongoId().withMessage("Symbols must be valid MongoIDs"),
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -56,7 +63,7 @@ router.post(
   }
 );
 
-router.put("/:id", async (req, res) => {
+router.put("/:id", auth, hasPermission("admin"), async (req, res) => {
   try {
     let updatedChallenge = await Challenge.findByIdAndUpdate(
       req.params.id,
@@ -69,13 +76,17 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", auth, hasPermission("admin"), async (req, res) => {
   try {
     await Challenge.findByIdAndRemove(req.params.id);
     res.json({ message: "Challenge deleted" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+router.use("*", (req, res) => {
+  res.status(404).json({ message: "Route not found" });
 });
 
 module.exports = router;

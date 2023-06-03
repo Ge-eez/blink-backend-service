@@ -32,6 +32,11 @@ const userSchema = new mongoose.Schema(
         lastAttempt: Date,
       },
     ],
+    role: {
+      type: String,
+      enum: ["user", "admin", "moderator"],
+      default: "user",
+    },
   },
   { timestamps: true } // Enable automatic timestamps
 );

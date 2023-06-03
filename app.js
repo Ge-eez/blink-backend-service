@@ -9,7 +9,10 @@ const uri = process.env.MONGODB_URI;
 
 mongoose
   .connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log("Connected to database"))
+  .then(async () => {
+    console.log("MongoDB Connected...");
+    await migrate(); // This will run all migrations
+  })
   .catch((err) => console.error("Failed to connect to database", err));
 
 const indexRouter = require("./routes/index");
@@ -17,7 +20,7 @@ const usersRouter = require("./routes/users");
 const lessonsRouter = require("./routes/lessons");
 const challengesRouter = require("./routes/challenges");
 const authRouter = require("./routes/auth");
-const migrateLetters = require("./migration/migrate");
+const migrate = require("./migration/migrate");
 const symbolsRoutes = require("./routes/symbols");
 
 var app = express();
@@ -26,7 +29,6 @@ app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-migrateLetters();
 
 app.use("/", indexRouter);
 app.use("/users", usersRouter);

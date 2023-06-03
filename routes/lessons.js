@@ -1,11 +1,12 @@
 const express = require("express");
 const Lesson = require("../models/Lesson"); // Import the Lesson model
 const router = express.Router();
-const { body, validationResult } = require('express-validator');
-
+const { body, validationResult } = require("express-validator");
+const hasPermission = require("../middlewares/hasPermission");
+const auth = require("../middlewares/auth");
 
 // Read a specific lesson by id
-router.get("/:id", async (req, res) => {
+router.get("/:id", auth, async (req, res) => {
   try {
     let lesson = await Lesson.findById(req.params.id).populate("symbols");
     res.json(lesson);
@@ -15,7 +16,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // Read all lessons
-router.get("/", async (req, res) => {
+router.get("/", auth, async (req, res) => {
   try {
     let lessons = await Lesson.find().populate("symbols");
     res.json(lessons);
@@ -27,13 +28,23 @@ router.get("/", async (req, res) => {
 // Create a new lesson
 router.post(
   "/",
+  auth,
+  hasPermission("admin"),
   [
     body("name").isString().notEmpty().withMessage("Name is required"),
     body("description")
       .isString()
       .notEmpty()
       .withMessage("Description is required"),
-    body("level").isNumeric().withMessage("Level must be a number"),
+    body("level")
+      .isIn(["Beginner", "Intermediate", "Advanced"])
+      .withMessage("Level is invalid"),
+    body("symbols.*")
+      .isMongoId()
+      .withMessage("All Symbols must be valid MongoIDs"),
+    body("prerequisites.*")
+      .isMongoId()
+      .withMessage("All Prerequisites must be valid MongoIDs"),
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -54,7 +65,7 @@ router.post(
 );
 
 // Update a lesson
-router.put("/:id", async (req, res) => {
+router.put("/:id", auth, hasPermission("admin"), async (req, res) => {
   try {
     let updatedLesson = await Lesson.findByIdAndUpdate(
       req.params.id,
@@ -68,13 +79,17 @@ router.put("/:id", async (req, res) => {
 });
 
 // Delete a lesson
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", auth, hasPermission("admin"), async (req, res) => {
   try {
     await Lesson.findByIdAndRemove(req.params.id);
     res.json({ message: "Lesson deleted" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+router.use("*", (req, res) => {
+  res.status(404).json({ message: "Route not found" });
 });
 
 module.exports = router;

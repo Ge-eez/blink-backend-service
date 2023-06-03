@@ -2,8 +2,9 @@ const express = require("express");
 const User = require("../models/User"); // Import the User model
 const router = express.Router();
 const Challenge = require("../models/Challenge");
-const { body, validationResult } = require('express-validator');
-
+const { body, validationResult } = require("express-validator");
+const hasPermission = require("../middlewares/hasPermission");
+const auth = require("../middlewares/auth");
 
 router.get("/:id", async (req, res) => {
   try {
@@ -50,7 +51,7 @@ router.post(
   }
 );
 
-router.put("/:id", async (req, res) => {
+router.put("/:id", auth, hasPermission("admin"), async (req, res) => {
   try {
     let updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -71,7 +72,8 @@ router.delete("/:id", async (req, res) => {
 });
 
 router.put(
-  "/:id/unlock_challenge",
+  "/unlock_challenge",
+  auth,
   [body("challengeId").not().isEmpty().withMessage("Challenge ID is required")],
   async (req, res) => {
     const errors = validationResult(req);
@@ -80,57 +82,28 @@ router.put(
     }
 
     try {
-      const user = await User.findById(req.params.id);
+      const user = await User.findById(req.user._id);
       const challengeToUnlock = await Challenge.findById(req.body.challengeId);
 
       if (!challengeToUnlock) {
         return res.status(400).json({ error: "Challenge not found" });
       }
-      if (
-        challengeToUnlock.sequence.level == "Beginner" &&
-        challengeToUnlock.sequence.order == 1
-      ) {
-        const userChallengeProgressToUnlock = user.challenge_progress.find(
-          (progress) =>
-            String(progress.challenge) === String(challengeToUnlock._id)
-        );
 
-        if (!userChallengeProgressToUnlock) {
-          user.challenge_progress.push({
-            challenge: challengeToUnlock._id,
-            status: "Not Started",
-            locked: false,
-          });
-        } else {
-          userChallengeProgressToUnlock.locked = false;
-        }
-
-        await user.save();
-
-        return res.json({ message: "Challenge unlocked successfully" });
-      }
-
-      const previousChallenge = await Challenge.findOne({
-        "sequence.level": challengeToUnlock.sequence.level,
-        "sequence.order": challengeToUnlock.sequence.order - 1,
-      });
-
-      if (!previousChallenge) {
-        return res.status(400).json({ error: "Previous challenge not found" });
-      }
-
-      const previousUserChallengeProgress = user.challenge_progress.find(
+      // Get the challenge progress for all of the challenges that are prerequisites for this one
+      const prerequisiteProgresses = user.challenge_progress.filter(
         (progress) =>
-          String(progress.challenge) === String(previousChallenge._id)
+          challengeToUnlock.requirements.includes(progress.challenge)
       );
 
+      // If any of the prerequisite challenges have not been completed, then the challenge cannot be unlocked
       if (
-        !previousUserChallengeProgress ||
-        previousUserChallengeProgress.status !== "Completed"
+        prerequisiteProgresses.some(
+          (progress) => progress.status !== "Completed"
+        )
       ) {
         return res
           .status(400)
-          .json({ error: "Previous challenge is not completed" });
+          .json({ error: "All prerequisite challenges must be completed" });
       }
 
       const userChallengeProgressToUnlock = user.challenge_progress.find(
@@ -156,5 +129,65 @@ router.put(
     }
   }
 );
+
+router.put(
+  "/start_lesson",
+  auth,
+  [body("lessonId").not().isEmpty().withMessage("Lesson ID is required")],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    try {
+      const user = await User.findById(req.user._id);
+      const lessonToStart = await Lesson.findById(req.body.lessonId).populate(
+        "prerequisites"
+      );
+
+      if (!lessonToStart) {
+        return res.status(400).json({ error: "Lesson not found" });
+      }
+
+      // Check if all prerequisites are completed
+      for (let prerequisite of lessonToStart.prerequisites) {
+        const userLessonProgress = user.lesson_progress.find(
+          (progress) => String(progress.lesson) === String(prerequisite._id)
+        );
+
+        if (!userLessonProgress || !userLessonProgress.completionStatus) {
+          return res.status(400).json({
+            error: `Prerequisite lesson ${prerequisite.name} is not completed`,
+          });
+        }
+      }
+
+      const userLessonProgressToStart = user.lesson_progress.find(
+        (progress) => String(progress.lesson) === String(lessonToStart._id)
+      );
+
+      if (!userLessonProgressToStart) {
+        user.lesson_progress.push({
+          lesson: lessonToStart._id,
+          completionStatus: false,
+          lastVisited: Date.now(),
+        });
+      } else {
+        userLessonProgressToStart.lastVisited = Date.now();
+      }
+
+      await user.save();
+
+      return res.json({ message: "Lesson started successfully" });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+router.use("*", (req, res) => {
+  res.status(404).json({ message: "Route not found" });
+});
 
 module.exports = router;

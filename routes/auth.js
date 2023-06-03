@@ -1,5 +1,5 @@
 const express = require("express");
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 const { body, validationResult } = require("express-validator");
 const bcrypt = require("bcrypt");
 const User = require("../models/User");
@@ -36,7 +36,6 @@ router.post(
   }
 );
 
-
 router.post(
   "/login",
   [
@@ -54,15 +53,21 @@ router.post(
       if (!user || !(await bcrypt.compare(req.body.password, user.password))) {
         return res.status(401).json({ error: "Invalid email or password" });
       }
-      let token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
-      res.json({ token: token });
+      const token = jwt.sign(
+        { id: user._id, role: user.role },
+        process.env.JWT_SECRET,
+        { expiresIn: "24h" }
+      );
+
+      res.json({ token: token, user: user });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
   }
 );
 
-module.exports = router;
-
+router.use("*", (req, res) => {
+  res.status(404).json({ message: "Route not found" });
+});
 
 module.exports = router;

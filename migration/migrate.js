@@ -1,4 +1,6 @@
-const Letter = require("../models/Symbol");
+const Symbol = require("../models/Symbol");
+const User = require('../models/User'); // Replace with the actual path to the User model
+const bcrypt = require("bcrypt");
 
 const lettersData = [
   { character: "u1200", representation: "ሀ", type: "letter", form: "1" },
@@ -52,16 +54,64 @@ const lettersData = [
   { character: "u1236", representation: "ሶ", type: "letter", form: "7" },
   // Continue this pattern for all other Amharic letters...
 ];
-
+let lettersCount = 0;
 const migrateLetters = async () => {
   for (const letterData of lettersData) {
     const { character } = letterData;
-    const letter = await Letter.findOne({ character });
+    const letter = await Symbol.findOne({ character });
     if (!letter) {
-      await Letter.create(letterData);
+      await Symbol.create(letterData);
+      lettersCount += 1;
     }
   }
-  console.log("Migration completed!");
+  console.log(`Migration of ${lettersCount} letters completed!`);
 };
 
-module.exports = migrateLetters;
+let usersCount = 0;
+const usersData = [
+  {
+    firstName: 'User',
+    lastName: 'One',
+    username: 'User1',
+    phone: '1234567890',
+    email: 'user1@example.com',
+    password: bcrypt.hashSync('userPassword', 10),
+    role: 'user',
+  },
+  {
+    firstName: 'Admin',
+    lastName: 'One',
+    username: 'Admin1',
+    phone: '1234567891',
+    email: 'admin1@example.com',
+    password: bcrypt.hashSync('adminPassword', 10),
+    role: 'admin',
+  },
+  {
+    firstName: 'Mod',
+    lastName: 'One',
+    username: 'Mod1',
+    phone: '1234567892',
+    email: 'mod1@example.com',
+    password: bcrypt.hashSync('moderatorPassword', 10),
+    role: 'moderator',
+  }
+];
+const migrateUsers = async () => {
+  for (const userData of usersData) {
+    const { email } = userData;
+    const user = await User.findOne({ email });
+    if (!user) {
+      await User.create(userData);
+      usersCount += 1;
+    }
+  }
+  console.log(`Migration of ${usersCount} users completed!`);
+};
+
+const migrate = async () => {
+  await migrateLetters();
+  await migrateUsers();
+};
+
+module.exports = migrate;
