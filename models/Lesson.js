@@ -1,11 +1,21 @@
 // lesson.js
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const lessonSchema = new mongoose.Schema({
-  name: String,
-  description: String,
-  level: Number, // skill level required for the lesson
-  letters: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Letter' }], // Array of related signs
-});
+const lessonSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true },
+    description: { type: String, required: true },
+    level: { type: Number, required: true },
+    symbols: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "Symbol", required: true },
+    ], // Array of related symbols
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+  },
+  { timestamps: true } // Enable automatic timestamps
+);
 
-module.exports = mongoose.model('Lesson', lessonSchema);
+module.exports = mongoose.model("Lesson", lessonSchema);
