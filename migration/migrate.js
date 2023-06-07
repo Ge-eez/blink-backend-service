@@ -61,7 +61,6 @@ const getSymbol = async (character) => {
 
 const migrateLessons = async () => {
   const existingLessonsCount = await Lesson.countDocuments();
-  const existingChallengesCount = await Challenge.countDocuments();
 
   const createBeginnerLessons = async () => {
     if (existingLessonsCount === lessonCharacters.length) {
@@ -105,6 +104,9 @@ const migrateLessons = async () => {
   };
 
   await createBeginnerLessons();
+};
+const migrateChallenges = async () => {
+  const existingChallengesCount = await Challenge.countDocuments();
   const createChallenges = async () => {
     if (existingChallengesCount >= challengeCharacters.length) {
       console.log("Challenges already migrated, skipping...");
@@ -153,6 +155,7 @@ const migrate = async () => {
   await migrateLetters();
   await migrateUsers();
   await migrateLessons();
+  await migrateChallenges();
 };
 
 module.exports = migrate;
