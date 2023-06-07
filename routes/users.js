@@ -17,7 +17,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.get("/", async (req, res) => {
+router.get("/", auth, async (req, res) => {
   try {
     let users = await User.find()
       .populate("lesson_progress.lesson")
@@ -29,7 +29,7 @@ router.get("/", async (req, res) => {
 });
 
 router.post(
-  "/",
+  "/", auth, hasPermission("admin"),
   [
     body("email").isEmail().withMessage("Email is not valid"),
     body("password")
@@ -62,7 +62,7 @@ router.put("/:id", auth, hasPermission("admin"), async (req, res) => {
   }
 });
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", auth, hasPermission("admin"), async (req, res) => {
   try {
     await User.findByIdAndRemove(req.params.id);
     res.json({ message: "User deleted" });
