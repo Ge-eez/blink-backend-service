@@ -6,6 +6,7 @@ const lessonCharacters = require("../data/lessonsData");
 const challengeCharacters = require("../data/lessonsData");
 const usersData = require("../data/userData");
 const Challenge = require("../models/Challenge");
+const getSymbol = require("../utils/getSymbol")
 
 const migrateLetters = async () => {
   const existingSymbolsCount = await Symbol.countDocuments();
@@ -47,16 +48,6 @@ const migrateUsers = async () => {
     }
   }
   console.log(`Migration of ${usersCount} users completed!`);
-};
-
-const getSymbol = async (character) => {
-  try {
-    const symbol = await Symbol.findOne({ character });
-    return symbol ? symbol : null;
-  } catch (err) {
-    console.error(err);
-    return null;
-  }
 };
 
 const migrateLessons = async () => {

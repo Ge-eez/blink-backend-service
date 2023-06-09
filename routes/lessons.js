@@ -4,6 +4,7 @@ const router = express.Router();
 const { body, validationResult } = require("express-validator");
 const hasPermission = require("../middlewares/hasPermission");
 const auth = require("../middlewares/auth");
+const getSymbol = require("../utils/getSymbol");
 
 // Read a specific lesson by id
 router.get("/:id", auth, async (req, res) => {
@@ -40,8 +41,9 @@ router.post(
       .isIn(["Beginner", "Intermediate", "Advanced"])
       .withMessage("Level is invalid"),
     body("symbols.*")
-      .isMongoId()
-      .withMessage("All Symbols must be valid MongoIDs"),
+      .isString()
+      .notEmpty()
+      .withMessage("All Symbols must be valid characters"),
     body("prerequisites.*")
       .isMongoId()
       .withMessage("All Prerequisites must be valid MongoIDs"),
@@ -52,8 +54,19 @@ router.post(
       return res.status(400).json({ errors: errors.array() });
     }
     try {
+      const symbolIds = [];
+      for (let symbol of req.body.symbols) {
+        const symbolDoc = await getSymbol(symbol);
+        if (symbolDoc) {
+          symbolIds.push(symbolDoc._id);
+        } else {
+          return res.status(400).json({ error: `Symbol ${symbol} not found` });
+        }
+      }
+
       let newLesson = new Lesson({
         ...req.body,
+        symbols: symbolIds,
         createdBy: req.user._id,
       });
       await newLesson.save();
