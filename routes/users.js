@@ -4,6 +4,7 @@ const router = express.Router();
 const Challenge = require("../models/Challenge");
 const { body, validationResult } = require("express-validator");
 const hasPermission = require("../middlewares/hasPermission");
+const bcrypt = require("bcrypt");
 const auth = require("../middlewares/auth");
 
 router.get("/:id", async (req, res) => {
@@ -43,6 +44,7 @@ router.post(
     }
     try {
       let newUser = new User(req.body);
+      newUser.password = await bcrypt.hash(user.password, 10);
       await newUser.save();
       res.json(newUser);
     } catch (err) {
