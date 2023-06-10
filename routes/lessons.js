@@ -19,7 +19,13 @@ router.get("/:id", auth, async (req, res) => {
 // Read all lessons
 router.get("/", auth, async (req, res) => {
   try {
-    let lessons = await Lesson.find().populate("symbols");
+    let lessons = await Lesson.find()
+      .populate("symbols")
+      .populate("createdBy", 'username')
+      .populate({
+        path: "prerequisites",
+        select: "name"
+      });
     res.json(lessons);
   } catch (err) {
     res.status(500).json({ error: err.message });
