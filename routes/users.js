@@ -122,6 +122,82 @@ router.put(
 );
 
 router.put(
+  "/start_challenge",
+  auth,
+  [body("challengeId").not().isEmpty().withMessage("Challenge ID is required")],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    try {
+      const user = await User.findById(req.user._id);
+      const challengeToStart = await Challenge.findById(req.body.challengeId);
+
+      if (!challengeToStart) {
+        return res.status(400).json({ error: "Challenge not found" });
+      }
+
+      const userChallengeProgressToStart = user.challenge_progress.find(
+        (progress) =>
+          String(progress.challenge) === String(challengeToStart._id)
+      );
+
+      if (!userChallengeProgressToStart || userChallengeProgressToStart.locked) {
+        return res.status(400).json({ error: "This challenge has not been unlocked yet." });
+      } else {
+        userChallengeProgressToStart.status = "In Progress";
+      }
+
+      await user.save();
+
+      res.json({ message: "Challenge started successfully" });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+router.put(
+  "/complete_challenge",
+  auth,
+  [body("challengeId").not().isEmpty().withMessage("Challenge ID is required")],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    try {
+      const user = await User.findById(req.user._id);
+      const challengeToComplete = await Challenge.findById(req.body.challengeId);
+
+      if (!challengeToComplete) {
+        return res.status(400).json({ error: "Challenge not found" });
+      }
+
+      const userChallengeProgressToComplete = user.challenge_progress.find(
+        (progress) =>
+          String(progress.challenge) === String(challengeToComplete._id)
+      );
+
+      if (!userChallengeProgressToComplete || userChallengeProgressToComplete.status !== "In Progress") {
+        return res.status(400).json({ error: "This challenge is not in progress." });
+      } else {
+        userChallengeProgressToComplete.status = "Completed";
+      }
+
+      await user.save();
+
+      res.json({ message: "Challenge completed successfully" });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+router.put(
   "/start_lesson",
   auth,
   [body("lessonId").not().isEmpty().withMessage("Lesson ID is required")],
@@ -176,6 +252,55 @@ router.put(
     }
   }
 );
+
+router.put(
+  "/finish_lesson",
+  auth,
+  [body("lessonId").not().isEmpty().withMessage("Lesson ID is required")],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    try {
+      const user = await User.findById(req.user._id);
+      const lessonToFinish = await Lesson.findById(req.body.lessonId);
+
+      if (!lessonToFinish) {
+        return res.status(400).json({ error: "Lesson not found" });
+      }
+
+      const userLessonProgressToFinish = user.lesson_progress.find(
+        (progress) => String(progress.lesson) === String(lessonToFinish._id)
+      );
+
+      if (!userLessonProgressToFinish) {
+        return res.status(400).json({ error: "This lesson has not been started yet." });
+      } else {
+        userLessonProgressToFinish.completionStatus = true;
+        userLessonProgressToFinish.lastVisited = Date.now();
+      }
+
+      await user.save();
+
+      return res.json({ message: "Lesson finished successfully" });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+router.put("/me", auth, async (req, res) => {
+  try {
+    let updatedUser = await User.findByIdAndUpdate(req.user._id, req.body, {
+      new: true,
+    });
+    res.json(updatedUser);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 router.put("/:id", auth, hasPermission("admin"), async (req, res) => {
   try {
