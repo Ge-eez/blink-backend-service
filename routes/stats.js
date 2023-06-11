@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const auth = require("../middleware/auth");
-const hasPermission = require("../middleware/permission");
+const auth = require("../middlewares/auth");
+const hasPermission = require("../middlewares/hasPermission");
 
 const User = require("../models/User");
 const Lesson = require("../models/Lesson");

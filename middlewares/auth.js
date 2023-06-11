@@ -8,14 +8,18 @@ const auth = async (req, res, next) => {
     const token = req.header("Authorization").replace("Bearer ", "");
     // Verify and decode the token
     const data = jwt.verify(token, process.env.JWT_SECRET);
-    // Find the user
-    const user = await User.findOne({ _id: data.id });
-    if (!user) {
-      throw new Error("User not found");
+    if (data.id) {
+      // Find the user
+      const user = await User.findOne({ _id: data.id });
+      if (!user) {
+        throw new Error("User not found");
+      }
+      // Attach the user to the request object
+      req.user = user;
+      next();
+    } else {
+      throw new Error("Token not recognized");
     }
-    // Attach the user to the request object
-    req.user = user;
-    next();
   } catch (error) {
     console.log(error);
     res.status(401).send({ error: "Not authorized to access this resource" });

@@ -40,7 +40,7 @@ app.use("/lessons", lessonsRouter);
 app.use("/challenges", challengesRouter);
 app.use("/auth", authRouter);
 app.use("/symbols", symbolsRoutes);
-app.user("/stats", statsRoutes);
+app.use("/stats", statsRoutes);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
