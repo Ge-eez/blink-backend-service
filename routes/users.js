@@ -53,17 +53,6 @@ router.post(
   }
 );
 
-router.put("/:id", auth, hasPermission("admin"), async (req, res) => {
-  try {
-    let updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
-    res.json(updatedUser);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 router.delete("/:id", auth, hasPermission("admin"), async (req, res) => {
   try {
     await User.findByIdAndRemove(req.params.id);
@@ -187,6 +176,17 @@ router.put(
     }
   }
 );
+
+router.put("/:id", auth, hasPermission("admin"), async (req, res) => {
+  try {
+    let updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
+    res.json(updatedUser);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 router.use("*", (req, res) => {
   res.status(404).json({ message: "Route not found" });
