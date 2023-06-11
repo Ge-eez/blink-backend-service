@@ -21,8 +21,10 @@ const usersRouter = require("./routes/users");
 const lessonsRouter = require("./routes/lessons");
 const challengesRouter = require("./routes/challenges");
 const authRouter = require("./routes/auth");
-const migrate = require("./migration/migrate");
 const symbolsRoutes = require("./routes/symbols");
+const statsRoutes = require("./routes/stats");
+
+const migrate = require("./migration/migrate");
 
 var app = express();
 app.use(cors());
@@ -38,6 +40,7 @@ app.use("/lessons", lessonsRouter);
 app.use("/challenges", challengesRouter);
 app.use("/auth", authRouter);
 app.use("/symbols", symbolsRoutes);
+app.user("/stats", statsRoutes);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
