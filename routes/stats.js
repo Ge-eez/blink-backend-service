@@ -8,6 +8,7 @@ const Lesson = require("../models/Lesson");
 const Challenge = require("../models/Challenge");
 const Feedback = require("../models/Feedback");
 const Symbol = require("../models/Symbol");
+const UserActivity = require("../models/UserActivity");
 
 router.get("/", auth, hasPermission("admin"), async (req, res) => {
   try {
@@ -24,13 +25,31 @@ router.get("/", auth, hasPermission("admin"), async (req, res) => {
       startedCoursesCount += user.lesson_progress.length;
     }
 
+    // Aggregate user activity by month
+    const userActivity = await UserActivity.aggregate([
+      {
+        $group: {
+          _id: "$month",
+          totalSpent: { $sum: "$timeSpent" }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    // Prepare user activity for Flutter chart
+    const activitySpots = userActivity.map((activity, index) => ({
+      month: index + 1,
+      timeSpent: activity.totalSpent
+    }));
+
     res.json({
       usersCount,
       lessonsCount,
       challengesCount,
       feedbackCount,
       symbolsCount,
-      startedCoursesCount
+      startedCoursesCount,
+      activitySpots
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
