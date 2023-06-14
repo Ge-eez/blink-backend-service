@@ -46,10 +46,7 @@ router.post(
     body("level")
       .isIn(["Beginner", "Intermediate", "Advanced"])
       .withMessage("Level is invalid"),
-    body("symbols.*")
-      .isString()
-      .notEmpty()
-      .withMessage("All Symbols must be valid characters"),
+    body("symbols.*").isMongoId().withMessage("Symbols must be valid MongoIDs"),
     body("prerequisites.*")
       .isMongoId()
       .withMessage("All Prerequisites must be valid MongoIDs"),
@@ -60,19 +57,8 @@ router.post(
       return res.status(400).json({ errors: errors.array() });
     }
     try {
-      const symbolIds = [];
-      for (let symbol of req.body.symbols) {
-        const symbolDoc = await getSymbol(symbol);
-        if (symbolDoc) {
-          symbolIds.push(symbolDoc._id);
-        } else {
-          return res.status(400).json({ error: `Symbol ${symbol} not found` });
-        }
-      }
-
       let newLesson = new Lesson({
         ...req.body,
-        symbols: symbolIds,
         createdBy: req.user._id,
       });
       await newLesson.save();
