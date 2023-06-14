@@ -6,7 +6,43 @@ const lessonCharacters = require("../data/lessonsData");
 const challengeCharacters = require("../data/lessonsData");
 const usersData = require("../data/userData");
 const Challenge = require("../models/Challenge");
-const getSymbol = require("../utils/getSymbol")
+const getSymbol = require("../utils/getSymbol");
+const UserActivity = require("../models/UserActivity");
+const userActivityData = require("../data/userActivityData");
+
+const migrateUserActivity = async () => {
+  const existingUserActivityCount = await UserActivity.countDocuments();
+
+  if (existingUserActivityCount >= userActivityData.length) {
+    console.log("User activity data already migrated, skipping...");
+    return;
+  }
+
+  let userActivityCount = 0;
+
+  for (const activityData of userActivityData) {
+    const { user, month } = activityData;
+    const userInstance = await User.findOne({ email: user });
+
+    if (userInstance) {
+      const existingUserActivity = await UserActivity.findOne({
+        user: userInstance._id,
+        month: month,
+      });
+
+      if (!existingUserActivity) {
+        await UserActivity.create({
+          user: userInstance._id,
+          month: month,
+          timeSpent: activityData.timeSpent,
+        });
+        userActivityCount += 1;
+      }
+    }
+  }
+
+  console.log(`Migration of ${userActivityCount} user activities completed!`);
+};
 
 const migrateLetters = async () => {
   const existingSymbolsCount = await Symbol.countDocuments();
@@ -145,8 +181,9 @@ const migrateChallenges = async () => {
 const migrate = async () => {
   await migrateLetters();
   await migrateUsers();
-  await migrateLessons();
-  await migrateChallenges();
+  // await migrateLessons();
+  // await migrateChallenges();
+  await migrateUserActivity();
 };
 
 module.exports = migrate;
