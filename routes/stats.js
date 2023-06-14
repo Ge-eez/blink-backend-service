@@ -21,7 +21,7 @@ router.get("/", auth, hasPermission("admin"), async (req, res) => {
     let startedCoursesCount = 0;
 
     for (let user of users) {
-      startedCoursesCount += user.startedCourses.length;
+      startedCoursesCount += user.lesson_progress.length;
     }
 
     res.json({
