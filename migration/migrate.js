@@ -160,7 +160,7 @@ const migrateChallenges = async () => {
           level: "Beginner",
           requirements: previousChallenge ? [previousChallenge._id] : [], // If there's a previous challenge, it's a requirement
           symbols: symbolIds,
-          createdBy: "647b5492e479376c196a6d66", // Replace this with the ObjectId of the admin user
+          createdBy: "6489ee24c802a99b0e3c47a7", // Replace this with the ObjectId of the admin user
         });
 
         // Save the challenge
@@ -181,8 +181,8 @@ const migrateChallenges = async () => {
 const migrate = async () => {
   await migrateLetters();
   await migrateUsers();
-  // await migrateLessons();
-  // await migrateChallenges();
+  await migrateLessons();
+  await migrateChallenges();
   await migrateUserActivity();
 };
 
