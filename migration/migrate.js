@@ -90,7 +90,7 @@ const migrateLessons = async () => {
   const existingLessonsCount = await Lesson.countDocuments();
 
   const createBeginnerLessons = async () => {
-    if (existingLessonsCount === lessonCharacters.length) {
+    if (existingLessonsCount >= lessonCharacters.length) {
       console.log("Lessons already migrated, skipping...");
       return;
     }
