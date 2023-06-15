@@ -16,31 +16,16 @@ router.get("/:id", auth, async (req, res) => {
   }
 });
 
-const populateRequirementsRecursively = async (challenge) => {
-  if (challenge.requirements && challenge.requirements.length > 0) {
-    for (let i = 0; i < challenge.requirements.length; i++) {
-      let subChallenge = await Challenge.findById(challenge.requirements[i])
-        .populate("symbols");
-      challenge.requirements[i] = await populateRequirementsRecursively(subChallenge);
-    }
-  }
-  return challenge;
-}
-
 router.get("/", auth, async (req, res) => {
   try {
     let challenges = await Challenge.find()
-      .populate("symbols");
-    for (let i = 0; i < challenges.length; i++) {
-      challenges[i] = await populateRequirementsRecursively(challenges[i]);
-    }
+      .populate("symbols")
+      .populate("requirements");
     res.json(challenges);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
-
-
 
 router.post(
   "/",
