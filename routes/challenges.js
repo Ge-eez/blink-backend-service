@@ -21,10 +21,7 @@ router.get("/", auth, async (req, res) => {
     let challenges = await Challenge.find()
       .populate("symbols")
       .populate("createdBy", 'username')
-      .populate({
-        path: "requirements",
-        select: "name"
-      });
+      .populate("requirements");
     res.json(challenges);
   } catch (err) {
     res.status(500).json({ error: err.message });
