@@ -47,7 +47,7 @@ const migrateUserActivity = async () => {
 const migrateLetters = async () => {
   const existingSymbolsCount = await Symbol.countDocuments();
 
-  if (existingSymbolsCount === lettersData.length) {
+  if (existingSymbolsCount >= lettersData.length) {
     console.log("Symbols already migrated, skipping...");
     return;
   }
@@ -88,12 +88,12 @@ const migrateUsers = async () => {
 
 const migrateLessons = async () => {
   const existingLessonsCount = await Lesson.countDocuments();
+  if (existingLessonsCount >= lessonCharacters.length) {
+    console.log("Lessons already migrated, skipping...");
+    return;
+  }
 
   const createBeginnerLessons = async () => {
-    if (existingLessonsCount >= lessonCharacters.length) {
-      console.log("Lessons already migrated, skipping...");
-      return;
-    }
     try {
       let previousLesson = null; // We start with no prerequisite
 
@@ -134,11 +134,11 @@ const migrateLessons = async () => {
 };
 const migrateChallenges = async () => {
   const existingChallengesCount = await Challenge.countDocuments();
+  if (existingChallengesCount >= challengeCharacters.length) {
+    console.log("Challenges already migrated, skipping...");
+    return;
+  }
   const createChallenges = async () => {
-    if (existingChallengesCount >= challengeCharacters.length) {
-      console.log("Challenges already migrated, skipping...");
-      return;
-    }
     try {
       let previousChallenge = null; // We start with no requirements
 
