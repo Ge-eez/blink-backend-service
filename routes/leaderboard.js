@@ -1,22 +1,24 @@
 const express = require("express");
 const router = express.Router();
 const auth = require("../middlewares/auth");
-const hasPermission = require("../middlewares/hasPermission");
 
 const User = require("../models/User");
 
 router.get("/", auth, async (req, res) => {
   try {
-    let users = await User.find({}, "username lesson_progress") // only select the username and lesson_progress fields
-      .sort((a, b) => b.lesson_progress.length - a.lesson_progress.length);
-
-    // add the lessonCount field to each user
-    users = users.map((user) => {
-      return {
-        ...user._doc, // _doc property contains the actual user document
-        lessonCount: user.lesson_progress.length,
-      };
-    });
+    const users = await User.aggregate([
+      {
+        $project: {
+          username: 1,
+          lessonCount: { $size: "$lesson_progress" }
+        },
+      },
+      {
+        $sort: {
+          lessonCount: -1,
+        },
+      },
+    ]);
 
     res.json(users);
   } catch (err) {
