@@ -22,6 +22,7 @@ const lessonsRouter = require("./routes/lessons");
 const challengesRouter = require("./routes/challenges");
 const authRouter = require("./routes/auth");
 const symbolsRoutes = require("./routes/symbols");
+const leaderboardRoutes = require("./routes/leaderboard");
 const statsRoutes = require("./routes/stats");
 
 const migrate = require("./migration/migrate");
@@ -41,6 +42,7 @@ app.use("/challenges", challengesRouter);
 app.use("/auth", authRouter);
 app.use("/symbols", symbolsRoutes);
 app.use("/stats", statsRoutes);
+app.use('/leaderboard', leaderboardRoutes);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
