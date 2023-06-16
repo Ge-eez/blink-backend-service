@@ -99,6 +99,9 @@ const migrateLessons = async () => {
 
       // Loop through each group of characters and create a lesson
       for (let i = 0; i < lessonCharacters.length; i++) {
+        const { name } = `Beginner Lesson ${i + 1}`;
+        const existsChallenge = await Challenge.findOne({ name });
+        if (!existsChallenge) {
         // Get the symbol IDs
         const symbolIds = [];
         let firstCharacterRepresentation;
@@ -110,7 +113,7 @@ const migrateLessons = async () => {
 
         // Create a lesson
         const lesson = new Lesson({
-          name: `Beginner Lesson ${i + 1}`,
+          name: `${name}`,
           description: `In this lesson, you will learn the forms of the characters starting with ${firstCharacterRepresentation}`,
           level: "Beginner",
           symbols: symbolIds,
@@ -124,6 +127,7 @@ const migrateLessons = async () => {
 
         // This lesson becomes the prerequisite for the next one
         previousLesson = lesson;
+      }
       }
     } catch (err) {
       console.error(err);
@@ -144,31 +148,35 @@ const migrateChallenges = async () => {
 
       // Loop through each group of characters and create a challenge
       for (let i = 0; i < challengeCharacters.length; i++) {
-        // Get the symbol IDs
-        const symbolIds = [];
-        for (const character of challengeCharacters[i]) {
-          const symbol = await getSymbol(character);
-          symbolIds.push(symbol._id);
+        const { name } = `Beginner Challenge ${i + 1}`;
+        const existsChallenge = await Challenge.findOne({ name });
+        if (!existsChallenge) {
+          // Get the symbol IDs
+          const symbolIds = [];
+          for (const character of challengeCharacters[i]) {
+            const symbol = await getSymbol(character);
+            symbolIds.push(symbol._id);
+          }
+
+          // Create a challenge
+          const challenge = new Challenge({
+            name: `${name}`,
+            description: `In this challenge, you will be tested on the forms of the characters learned in Beginner Lesson ${
+              i + 1
+            }`,
+            level: "Beginner",
+            requirements: previousChallenge ? [previousChallenge._id] : [], // If there's a previous challenge, it's a requirement
+            symbols: symbolIds,
+            createdBy: "6489ee24c802a99b0e3c47a7", // Replace this with the ObjectId of the admin user
+          });
+
+          // Save the challenge
+          await challenge.save();
+          console.log(`Created ${challenge.name}`);
+
+          // This challenge becomes the requirement for the next one
+          previousChallenge = challenge;
         }
-
-        // Create a challenge
-        const challenge = new Challenge({
-          name: `Beginner Challenge ${i + 1}`,
-          description: `In this challenge, you will be tested on the forms of the characters learned in Beginner Lesson ${
-            i + 1
-          }`,
-          level: "Beginner",
-          requirements: previousChallenge ? [previousChallenge._id] : [], // If there's a previous challenge, it's a requirement
-          symbols: symbolIds,
-          createdBy: "6489ee24c802a99b0e3c47a7", // Replace this with the ObjectId of the admin user
-        });
-
-        // Save the challenge
-        await challenge.save();
-        console.log(`Created ${challenge.name}`);
-
-        // This challenge becomes the requirement for the next one
-        previousChallenge = challenge;
       }
     } catch (err) {
       console.error(err);
