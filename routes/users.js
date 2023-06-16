@@ -32,7 +32,13 @@ router.get("/", auth, async (req, res) => {
 router.post(
   "/", auth, hasPermission("admin"),
   [
+    body("firstName").not().isEmpty().withMessage("First Name is required"),
+    body("lastName").not().isEmpty().withMessage("Last Name is required"),
+    body("username").not().isEmpty().withMessage("Username is required"),
+    body("phone").not().isEmpty().withMessage("Phone number is required"),
+    // username must be an email
     body("email").isEmail().withMessage("Email is not valid"),
+    // password must be at least 5 chars long
     body("password")
       .isLength({ min: 5 })
       .withMessage("Password must be at least 5 characters long"),
