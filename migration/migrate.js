@@ -113,7 +113,7 @@ const migrateLessons = async () => {
 
         // Create a lesson
         const lesson = new Lesson({
-          name: `${name}`,
+          name: `Beginner Lesson ${i + 1}`,
           description: `In this lesson, you will learn the forms of the characters starting with ${firstCharacterRepresentation}`,
           level: "Beginner",
           symbols: symbolIds,
@@ -160,7 +160,7 @@ const migrateChallenges = async () => {
 
           // Create a challenge
           const challenge = new Challenge({
-            name: `${name}`,
+            name: `Beginner Challenge ${i + 1}`,
             description: `In this challenge, you will be tested on the forms of the characters learned in Beginner Lesson ${
               i + 1
             }`,
