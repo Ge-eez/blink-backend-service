@@ -44,7 +44,7 @@ router.post(
     }
     try {
       let newUser = new User(req.body);
-      newUser.password = await bcrypt.hash(user.password, 10);
+      newUser.password = await bcrypt.hash(newUser.password, 10);
       await newUser.save();
       res.json(newUser);
     } catch (err) {
